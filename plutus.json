@@ -1,0 +1,85 @@
+{
+  "preamble": {
+    "title": "aiken-lang/cardano-verify",
+    "description": "Aiken contracts for project 'aiken-lang/cardano-verify'",
+    "version": "0.0.0",
+    "plutusVersion": "v2",
+    "compiler": {
+      "name": "Aiken",
+      "version": "v1.0.21-alpha+unknown"
+    },
+    "license": "Apache-2.0"
+  },
+  "validators": [
+    {
+      "title": "verify.incrementOrCreate",
+      "datum": {
+        "title": "datum",
+        "schema": {
+          "$ref": "#/definitions/verify~1Datum"
+        }
+      },
+      "redeemer": {
+        "title": "redeemer",
+        "schema": {
+          "$ref": "#/definitions/verify~1Redeemer"
+        }
+      },
+      "parameters": [
+        {
+          "title": "vkey",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "590314010000323232323232323232232222323232533300b32533300c3370e900000089919191919299980899b8748008c0400044c8c8c8c94ccc054cdc3a4000602800226464646464a66603400420022940cdc39bad300a3017014337006eb4c028c05c00920023371e6eb8c028c058004dd71805180b009991900118080009919299980c99b87480080044c8c8c8c94ccc074cdc3a40000022604460360042c603600266446464a66603e66e1d2002001132533302300114c103d87a800013374a9000198121812800a5eb80c8cc004004014894ccc09000452f5c0264646464a66604a66e1d2002001133006006003133029302a3023002330060060033023001323253330253370e900200089919299981399b8f37286ecc0040344cdd2a40006605600297ae014c0103d87a8000302b001302300214c103d87a8000302300130173021002302800230260011002301d001323300100100222533302200114c103d87a800013232323253330233371e012004266e952000330270014bd7009980300300198120019bae3022002302600230240013758601e6032601a60320286eacc080c084c084c084c084c084c084c084c084c084c084c064c034c064050dd7180f800980b8010a99980c99b87480100044c078c05c00858c05c004c02cc054004c06c004c04c00458cc01cdd61804180918031809006919baf3007301330063013002300730130013253330143370e900018098008980c98090008b198031bac300530113005301100c23375e600c6024002004602e002601e0022c6002601c0124602a602c0024602800244646600200200644a666028002298103d87a8000132325333013300500213374a90001980b80125eb804cc010010004c060008c0580048c048c04cc04c00452818050028a4c26cac64a66601666e1d20000011533300e300900514985854ccc02ccdc3a40040022a66601c601200a2930b0b18048021800802119299980519b87480000044c8c8c8c94ccc044c05000852616375a602400260240046eb8c040004c02000858c020004dd7000918029baa001230033754002ae6955ceaab9e5573eae815d0aba21",
+      "hash": "ddf610db4104cb37d6607e997ba29caac1c88561435d621ae30f07cc"
+    }
+  ],
+  "definitions": {
+    "ByteArray": {
+      "dataType": "bytes"
+    },
+    "Int": {
+      "dataType": "integer"
+    },
+    "verify/Datum": {
+      "title": "Datum",
+      "anyOf": [
+        {
+          "title": "Datum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "filehash",
+              "$ref": "#/definitions/ByteArray"
+            },
+            {
+              "title": "checkcount",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "verify/Redeemer": {
+      "title": "Redeemer",
+      "anyOf": [
+        {
+          "title": "Increment",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": []
+        },
+        {
+          "title": "Withdraw",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    }
+  }
+}
