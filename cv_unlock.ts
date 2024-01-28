@@ -5,6 +5,8 @@ import {
     Data,
     Lucid,
     SpendingValidator,
+    applyDoubleCborEncoding,
+    applyParamsToScript,
     TxHash,
     Datum,
     fromHex,
@@ -23,7 +25,6 @@ import {
     ),
     "Preview"
   );
-
   
   const Datum = Data.Object({
     filehash: Data.Bytes(), 
@@ -45,8 +46,6 @@ import {
     const decoder = new TextDecoder();
     return decoder.decode(utf8Array);
   }  
-  
-  const validator = await readValidator();
    
   async function readValidator(): Promise<SpendingValidator> {
     const validator = JSON.parse(await Deno.readTextFile("plutus.json"))
@@ -59,7 +58,17 @@ import {
   
   const utxo: OutRef = { txHash: Deno.args[0], outputIndex: 0 };
   
-  const vkey = await lucid.wallet.address();
+  //returns object 
+  const priv = C.PrivateKey.from_bech32("ed25519_sk1qanh5aylvvvx9w6awyhjgqzwjt23mjn9482tw726a8ca7t3ts4lqajpl0c");
+  const pubKeyHash = priv.to_public().hash();
+  console.log("pubkeyhash: " + pubKeyHash);
+
+  // public key to credentials to pubkeyhash
+  const public_address = await lucid.wallet.address();
+  const credentials = lucid.utils.paymentCredentialOf(public_address);
+  console.log("credentials: " + credentials);
+  
+
   const [utxoinfo] = await lucid.utxosByOutRef([utxo]);
   console.log(utxoinfo);
   const serializedData: Datum =  utxoinfo.datum;
@@ -78,6 +87,7 @@ import {
     Datum
   );
 
+  const validator = await applyParamsToScript(readValidator(), [vkey]);
 
   const txLock = await unlock(1000000, utxo, {
     from: validator,
