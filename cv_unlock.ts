@@ -46,28 +46,22 @@ import {
     const decoder = new TextDecoder();
     return decoder.decode(utf8Array);
   }  
+
+  const ownerPublicKeyHash = lucid.utils.getAddressDetails(
+    await lucid.wallet.address()
+  ).paymentCredential.hash;
+  console.log("ownerPublicKeyHash: " + ownerPublicKeyHash);
    
   async function readValidator(): Promise<SpendingValidator> {
     const validator = JSON.parse(await Deno.readTextFile("plutus.json"))
       .validators[0];
     return {
       type: "PlutusV2",
-      script: toHex(cbor.encode(fromHex(validator.compiledCode))),
+      script: applyParamsToScript(applyDoubleCborEncoding(validator.compiledCode), [ownerPublicKeyHash]),
     };
   }
   
   const utxo: OutRef = { txHash: Deno.args[0], outputIndex: 0 };
-  
-  //returns object 
-  const priv = C.PrivateKey.from_bech32("ed25519_sk1qanh5aylvvvx9w6awyhjgqzwjt23mjn9482tw726a8ca7t3ts4lqajpl0c");
-  const pubKeyHash = priv.to_public().hash();
-  console.log("pubkeyhash: " + pubKeyHash);
-
-  // public key to credentials to pubkeyhash
-  const public_address = await lucid.wallet.address();
-  const credentials = lucid.utils.paymentCredentialOf(public_address);
-  console.log("credentials: " + credentials);
-  
 
   const [utxoinfo] = await lucid.utxosByOutRef([utxo]);
   console.log(utxoinfo);
@@ -78,7 +72,6 @@ import {
   console.log("filehashfromdatum: " + filehashfromdatum);
   console.log("checkcountfromdatum:" + checkcountfromdatum);
   
-  
   const new_datum = await Data.to<Datum>(
     {
         filehash: fromText(filehashfromdatum), 
@@ -87,8 +80,7 @@ import {
     Datum
   );
 
-  const validator = await applyParamsToScript(readValidator(), [vkey]);
-
+  const validator = await readValidator();
   const txLock = await unlock(1000000, utxo, {
     from: validator,
     using: redeemer,
@@ -103,7 +95,7 @@ import {
     console.log("utxo done");
     const tx = await lucid
       .newTx()
-      .addSigner(vkey)
+      .addSigner(ownerPublicKeyHash)
       .collectFrom([utxo], using)
       .payToContract(lucid.utils.validatorToAddress(from), { inline: new_datum }, lovelace)
       .attachSpendingValidator(from)
@@ -117,7 +109,7 @@ import {
 
     console.log("signed tx done");
    
-    return signedTx.submit();
+    return signedTx.submit(); 
   }
   
   console.log(`1 tADA locked into the contract
