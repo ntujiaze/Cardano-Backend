@@ -55,13 +55,14 @@ import {
   async function readValidator(): Promise<SpendingValidator> {
     const validator = JSON.parse(await Deno.readTextFile("plutus.json"))
       .validators[0];
+    const param_validator = applyParamsToScript(validator.compiledCode, [ownerPublicKeyHash]);
     return {
       type: "PlutusV2",
-      script: applyParamsToScript(applyDoubleCborEncoding(validator.compiledCode), [ownerPublicKeyHash]),
+      script: applyDoubleCborEncoding(param_validator),
     };
   }
   
-  const utxo: OutRef = { txHash: Deno.args[0], outputIndex: 0 };
+  const utxo: OutRef = { txHash: Deno.args[0], outputIndex: 1 };
 
   const [utxoinfo] = await lucid.utxosByOutRef([utxo]);
   console.log(utxoinfo);
@@ -72,13 +73,7 @@ import {
   console.log("filehashfromdatum: " + filehashfromdatum);
   console.log("checkcountfromdatum:" + checkcountfromdatum);
   
-  const new_datum = await Data.to<Datum>(
-    {
-        filehash: fromText(filehashfromdatum), 
-        checkcount: BigInt(checkcountfromdatum+1), 
-    },
-    Datum
-  );
+  const new_datum = await Data.to(new Constr<Data>(0, [filehashfromdatum, checkcountfromdatum+1]));
 
   const validator = await readValidator();
   const txLock = await unlock(1000000, utxo, {
@@ -95,7 +90,7 @@ import {
     console.log("utxo done");
     const tx = await lucid
       .newTx()
-      .addSigner(ownerPublicKeyHash)
+      .addSigner(await lucid.wallet.address())
       .collectFrom([utxo], using)
       .payToContract(lucid.utils.validatorToAddress(from), { inline: new_datum }, lovelace)
       .attachSpendingValidator(from)
