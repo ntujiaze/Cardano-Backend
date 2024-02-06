@@ -10,6 +10,8 @@ import {
     toHex,
     fromText,
     utf8ToHex,
+    applyParamsToScript,
+    applyDoubleCborEncoding,
   } from "https://deno.land/x/lucid@0.10.7/mod.ts";
   import * as cbor from "https://deno.land/x/cbor@v1.4.1/index.js";
    
@@ -23,23 +25,31 @@ import {
 
   lucid.selectWalletFromPrivateKey(await Deno.readTextFile("./me.sk"));
 
-const validator = await readValidator();
-   
-  async function readValidator(): Promise<SpendingValidator> {
-    const validator = JSON.parse(await Deno.readTextFile("plutus.json")).validators[0];
-    return {
-      type: "PlutusV2",
-      script: toHex(cbor.encode(fromHex(validator.compiledCode))),
-    };
-  }
+const ownerPublicKeyHash = lucid.utils.getAddressDetails(
+  await lucid.wallet.address()
+).paymentCredential.hash;
+console.log("ownerPublicKeyHash: " + ownerPublicKeyHash);
 
+const pkh = Data.to(new Constr<Data>(0, [ownerPublicKeyHash]));
+
+const validator = await readValidator();
+
+async function readValidator(): Promise<SpendingValidator> {
+  const validator = JSON.parse(await Deno.readTextFile("plutus.json"))
+    .validators[0];
+  const param_validator = applyParamsToScript(validator.compiledCode, [pkh]);
+  return {
+    type: "PlutusV2",
+    script: applyDoubleCborEncoding(param_validator),
+  };
+}
+
+//placeholder
 let userfilehash:string = "hello world";
 
 const Datum = Data.Object({
     filehash: Data.Bytes(), 
     checkcount: Data.Integer(), 
-  }, {
-    hasConstr: false,
   });
 
 type Datum = Data.Static<typeof Datum>;
